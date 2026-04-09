@@ -1,3 +1,6 @@
+# Arquivos de mídia para transcrição (pesados, não comitar)
+arquivos/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
