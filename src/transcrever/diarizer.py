@@ -113,15 +113,28 @@ def diarize_pyannote(
             "pyannote.audio não instalado. Execute: uv sync --extra diarize"
         )
 
+    import os
+
     import soundfile as sf
     import torch
 
     torch_device = torch.device("cuda" if device != "cpu" and torch.cuda.is_available() else "cpu")
 
-    pipeline = Pipeline.from_pretrained(
-        "pyannote/speaker-diarization-3.1",
-        token=hf_token,
-    )
+    # Define token via env var (compativel com todas as versoes do huggingface_hub)
+    if hf_token:
+        os.environ["HF_TOKEN"] = hf_token
+
+    try:
+        pipeline = Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            token=hf_token,
+        )
+    except TypeError:
+        # Fallback para versoes antigas do huggingface_hub
+        pipeline = Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            use_auth_token=hf_token,
+        )
     pipeline.to(torch_device)
 
     # Pré-carrega o áudio com soundfile para evitar dependência do torchcodec

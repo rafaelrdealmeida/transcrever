@@ -69,22 +69,22 @@ def process_file(
                 for i, d in enumerate(seg_dicts)
             ]
 
-        # Formata e salva (timestamped)
-        output = formatter(transcript)
-        out_path = _output_path(input_path, fmt)
-        out_path.write_text(output, encoding="utf-8")
-
-        # Salva versão texto corrido (com falantes)
-        plain_output = format_plain(transcript)
-        plain_path = input_path.with_stem(f"{input_path.stem}_texto").with_suffix(f".{fmt}")
-        plain_path.write_text(plain_output, encoding="utf-8")
-
-        # Salva versão texto puro (sem timestamps nem falantes)
+        # 01 - Texto bruto (sem timestamps nem falantes)
         raw_output = format_raw(transcript)
-        raw_path = input_path.with_stem(f"{input_path.stem}_puro").with_suffix(f".{fmt}")
+        raw_path = input_path.with_stem(f"{input_path.stem}_01_bruto").with_suffix(f".{fmt}")
         raw_path.write_text(raw_output, encoding="utf-8")
 
-        console.print(f"  [green]✓[/green] {out_path.name} + {plain_path.name} + {raw_path.name}")
+        # 02 - Texto corrido com falantes (sem timestamps)
+        plain_output = format_plain(transcript)
+        plain_path = input_path.with_stem(f"{input_path.stem}_02_pessoas").with_suffix(f".{fmt}")
+        plain_path.write_text(plain_output, encoding="utf-8")
+
+        # 03 - Timestamps + falantes
+        output = formatter(transcript)
+        full_path = input_path.with_stem(f"{input_path.stem}_03_tempo_pessoas").with_suffix(f".{fmt}")
+        full_path.write_text(output, encoding="utf-8")
+
+        console.print(f"  [green]✓[/green] {raw_path.name} + {plain_path.name} + {full_path.name}")
         return transcript
     finally:
         # Limpa o WAV temporário
@@ -113,7 +113,11 @@ def process_path(
         console.print(f"[yellow]Nenhum arquivo de áudio encontrado em {path}[/yellow]")
         return []
 
-    console.print(f"Encontrados [bold]{len(files)}[/bold] arquivo(s) de áudio\n")
+    from transcrever.config import detect_device
+
+    dev, compute_type = detect_device(device)
+    console.print(f"Encontrados [bold]{len(files)}[/bold] arquivo(s) de áudio")
+    console.print(f"Device: [cyan]{dev}[/cyan] | Compute: [cyan]{compute_type}[/cyan] | Modelo: [cyan]{model_size}[/cyan]\n")
 
     transcripts: list[Transcript] = []
 

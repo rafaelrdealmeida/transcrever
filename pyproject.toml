@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 diarize = ["pyannote.audio>=3.1", "torch>=2.0"]
+vastai = ["vastai"]
 dev = ["pytest>=8.0", "pytest-cov", "ruff", "mypy"]
 
 [project.scripts]
