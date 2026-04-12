@@ -1,6 +1,15 @@
 # Arquivos de mídia para transcrição (pesados, não comitar)
 arquivos/
 
+# Ferramentas locais e IDE
+.claude/
+.vscode/
+
+# Resultados e arquivos temporários
+*.zip
+notebooks/
+AC2*.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
