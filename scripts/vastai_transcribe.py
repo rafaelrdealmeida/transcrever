@@ -74,6 +74,8 @@ def load_config() -> dict[str, str | int]:
 MEDIA_EXTS = {".m4a", ".mp3", ".wav", ".ogg", ".flac", ".wma", ".aac",
               ".mp4", ".mkv", ".webm", ".avi", ".mov"}
 
+VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".avi", ".mov"}
+
 
 # ─── Funcoes auxiliares ────────────────────────────────────────────────
 
@@ -122,6 +124,40 @@ def rsync_exec(args: str) -> None:
         raise RuntimeError(f"rsync falhou (exit {r.returncode})")
 
 
+def preconvert_videos(directory: Path) -> list[Path]:
+    """Converte arquivos de video para FLAC localmente antes do upload.
+
+    Usa qualidade maxima (lossless): copia o stream de audio sem resampling.
+    Retorna lista dos FLACs criados para limpeza posterior.
+    """
+    created: list[Path] = []
+    for p in sorted(directory.rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in VIDEO_EXTS:
+            continue
+        flac_path = p.with_suffix(".flac")
+        if flac_path.exists():
+            print(f"  (ja existe) {flac_path.name}", flush=True)
+            created.append(flac_path)
+            continue
+        print(f"  {p.name} -> {flac_path.name}", flush=True)
+        r = subprocess.run(
+            [
+                "ffmpeg", "-i", str(p),
+                "-vn",           # sem video
+                "-acodec", "flac",
+                "-compression_level", "8",  # maximo: lossless, menor arquivo
+                "-y",
+                str(flac_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"Falha ao converter {p.name}: {r.stderr.strip()}")
+        created.append(flac_path)
+    return created
+
+
 def count_media_files(directory: Path) -> int:
     """Conta arquivos de audio e video na pasta."""
     count = 0
@@ -163,7 +199,7 @@ def create_instance(offer_id: int, image: str, disk_gb: int) -> int:
     return data["new_contract"]
 
 
-def wait_for_ssh(instance_id: int, timeout: int = 900) -> tuple[str, int]:
+def wait_for_ssh(instance_id: int, timeout: int = 1200) -> tuple[str, int]:
     """Aguarda instancia ficar pronta com SSH acessivel."""
     t0 = time.time()
     while time.time() - t0 < timeout:
@@ -229,7 +265,10 @@ echo ">>> Setup concluido"
 
 
 def upload_project(host: str, port: int) -> None:
-    """Transfere codigo-fonte e audios para o servidor."""
+    """Transfere codigo-fonte e audios para o servidor.
+
+    Videos sao excluidos: ja foram pre-convertidos para FLAC localmente.
+    """
     excludes = [
         ".venv/",
         "pretrained_models/",
@@ -243,6 +282,12 @@ def upload_project(host: str, port: int) -> None:
         "arquivos (2)/",
         "arquivos (3)/",
         "resultados.zip",
+        # Videos excluidos: FLAC pre-convertido e enviado no lugar
+        "*.mp4",
+        "*.mkv",
+        "*.webm",
+        "*.avi",
+        "*.mov",
     ]
     exc_args = " ".join(f"--exclude='{e}'" for e in excludes)
 
@@ -376,6 +421,14 @@ def main() -> None:
     instance_id = create_instance(offer["id"], cfg["image"], cfg["disk_gb"])
     print(f"  Instancia #{instance_id} criada")
 
+    # Pre-conversao de videos para FLAC (lossless, muito menor que MP4)
+    log("2.5/7 - Convertendo videos para FLAC...")
+    converted_flacs = preconvert_videos(arquivos_dir)
+    if converted_flacs:
+        print(f"  {len(converted_flacs)} video(s) convertido(s) para FLAC")
+    else:
+        print("  Nenhum video encontrado para converter")
+
     t_start = time.time()
 
     try:
@@ -407,6 +460,13 @@ def main() -> None:
         log("Destruindo instancia...")
         destroy_instance(instance_id)
         print("  Instancia destruida")
+
+        # Remove FLACs temporarios gerados pela pre-conversao
+        for flac in converted_flacs:
+            try:
+                flac.unlink()
+            except OSError:
+                pass
 
     elapsed = time.time() - t_start
     cost = (elapsed / 3600) * dph
