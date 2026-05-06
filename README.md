@@ -2,6 +2,15 @@
 
 CLI para transcrição automatizada de áudio/vídeo com identificação de falantes e suporte multilíngue.
 
+## Formatos suportados
+
+| Tipo | Extensões |
+|---|---|
+| Áudio | `.m4a` `.mp3` `.wav` `.ogg` `.flac` `.wma` `.aac` |
+| Vídeo | `.mp4` `.mkv` `.webm` `.avi` `.mov` |
+
+O áudio é extraído automaticamente de arquivos de vídeo via ffmpeg.
+
 ## Requisitos
 
 - Python 3.11+
@@ -36,13 +45,13 @@ uv run transcrever ./arquivos/ --model large-v3 --language pt
 uv run transcrever ./arquivos/ --diarize --diarize-backend pyannote --num-speakers 2
 ```
 
-Para cada áudio, são gerados 3 arquivos na mesma pasta:
+Para cada arquivo, são gerados 3 arquivos na mesma pasta:
 
 | Arquivo | Conteúdo |
 |---|---|
-| `<nome>.txt` | Transcrição com diarização e marcação temporal |
-| `<nome>_texto.txt` | Texto corrido agrupado por falante |
-| `<nome>_puro.txt` | Texto puro, sem falantes nem timestamps |
+| `<nome>_01_bruto.txt` | Texto puro, sem falantes nem timestamps |
+| `<nome>_02_pessoas.txt` | Texto corrido agrupado por falante |
+| `<nome>_03_tempo_pessoas.txt` | Transcrição com diarização e marcação temporal |
 
 ## Opções
 

@@ -70,8 +70,9 @@ def load_config() -> dict[str, str | int]:
         "audio_path": os.environ.get("AUDIO_PATH", "./arquivos"),
     }
 
-# Extensoes de audio suportadas
-AUDIO_EXTS = {".m4a", ".mp3", ".wav", ".ogg", ".flac", ".wma", ".aac"}
+# Extensoes de midia suportadas (audio + video)
+MEDIA_EXTS = {".m4a", ".mp3", ".wav", ".ogg", ".flac", ".wma", ".aac",
+              ".mp4", ".mkv", ".webm", ".avi", ".mov"}
 
 
 # ─── Funcoes auxiliares ────────────────────────────────────────────────
@@ -121,11 +122,11 @@ def rsync_exec(args: str) -> None:
         raise RuntimeError(f"rsync falhou (exit {r.returncode})")
 
 
-def count_audio_files(directory: Path) -> int:
-    """Conta arquivos de audio na pasta."""
+def count_media_files(directory: Path) -> int:
+    """Conta arquivos de audio e video na pasta."""
     count = 0
     for p in directory.rglob("*"):
-        if p.is_file() and p.suffix.lower() in AUDIO_EXTS:
+        if p.is_file() and p.suffix.lower() in MEDIA_EXTS:
             count += 1
     return count
 
@@ -350,9 +351,9 @@ def main() -> None:
     if not arquivos_dir.exists():
         sys.exit(f"ERRO: Pasta '{arquivos_dir}' nao encontrada")
 
-    n_audio = count_audio_files(arquivos_dir)
-    if n_audio == 0:
-        sys.exit(f"ERRO: Nenhum arquivo de audio encontrado em '{arquivos_dir}'")
+    n_media = count_media_files(arquivos_dir)
+    if n_media == 0:
+        sys.exit(f"ERRO: Nenhum arquivo de midia encontrado em '{arquivos_dir}'")
 
     whisper_model = cfg["whisper_model"]
     num_speakers = cfg["num_speakers"]
@@ -360,7 +361,7 @@ def main() -> None:
     # --- Pipeline ---
     print("=" * 58)
     print("  Pipeline Vast.ai - Transcricao com Diarizacao")
-    print(f"  {n_audio} arquivo(s) de audio | Modelo: {whisper_model}")
+    print(f"  {n_media} arquivo(s) de midia | Modelo: {whisper_model}")
     print("=" * 58)
 
     # 1. GPU
