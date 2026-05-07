@@ -6,7 +6,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 
 from transcrever.audio import discover_audio_files, extract_audio
 from transcrever.config import DEFAULT_FORMAT, DEFAULT_MODEL
-from transcrever.formatters.txt import format_plain, format_raw, format_txt
+from transcrever.formatters.txt import format_plain, format_raw, format_turns, format_txt
 from transcrever.models import Transcript
 from transcrever.transcriber import transcribe
 
@@ -84,7 +84,12 @@ def process_file(
         full_path = input_path.with_stem(f"{input_path.stem}_03_tempo_pessoas").with_suffix(f".{fmt}")
         full_path.write_text(output, encoding="utf-8")
 
-        console.print(f"  [green]✓[/green] {raw_path.name} + {plain_path.name} + {full_path.name}")
+        # 04 - Falas separadas por falante (um segmento por linha)
+        turns_output = format_turns(transcript)
+        turns_path = input_path.with_stem(f"{input_path.stem}_04_falas").with_suffix(f".{fmt}")
+        turns_path.write_text(turns_output, encoding="utf-8")
+
+        console.print(f"  [green]✓[/green] {raw_path.name} + {plain_path.name} + {full_path.name} + {turns_path.name}")
         return transcript
     finally:
         # Limpa o WAV temporário

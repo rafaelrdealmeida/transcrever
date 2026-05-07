@@ -45,13 +45,14 @@ uv run transcrever ./arquivos/ --model large-v3 --language pt
 uv run transcrever ./arquivos/ --diarize --diarize-backend pyannote --num-speakers 2
 ```
 
-Para cada arquivo, são gerados 3 arquivos na mesma pasta:
+Para cada arquivo, são gerados 4 arquivos na mesma pasta:
 
 | Arquivo | Conteúdo |
 |---|---|
 | `<nome>_01_bruto.txt` | Texto puro, sem falantes nem timestamps |
 | `<nome>_02_pessoas.txt` | Texto corrido agrupado por falante |
 | `<nome>_03_tempo_pessoas.txt` | Transcrição com diarização e marcação temporal |
+| `<nome>_04_falas.txt` | Falas separadas por falante, um segmento por linha |
 
 ## Opções
 

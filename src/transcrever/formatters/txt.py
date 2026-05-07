@@ -36,6 +36,26 @@ def format_plain(transcript: Transcript) -> str:
     return " ".join(parts).replace("  ", " ").strip() + "\n"
 
 
+def format_turns(transcript: Transcript) -> str:
+    """Formata cada segmento como uma linha separada dentro do bloco do falante.
+
+    Turnos diferentes são separados por linha em branco.
+    """
+    lines: list[str] = []
+    current_speaker: str | None = None
+
+    for seg in transcript.segments:
+        if seg.speaker and seg.speaker != current_speaker:
+            current_speaker = seg.speaker
+            if lines:
+                lines.append("")
+            lines.append(f"[{seg.speaker}]")
+
+        lines.append(seg.text.strip())
+
+    return "\n".join(lines).strip() + "\n"
+
+
 def format_raw(transcript: Transcript) -> str:
     """Formata uma transcrição como texto puro, sem timestamps nem falantes."""
     texts = [seg.text for seg in transcript.segments]
