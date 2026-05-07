@@ -37,23 +37,24 @@ def format_plain(transcript: Transcript) -> str:
 
 
 def format_turns(transcript: Transcript) -> str:
-    """Formata cada segmento como uma linha separada dentro do bloco do falante.
+    """Agrupa toda a fala de cada falante, independente da ordem cronológica."""
+    from collections import defaultdict
 
-    Turnos diferentes são separados por linha em branco.
-    """
-    lines: list[str] = []
-    current_speaker: str | None = None
+    by_speaker: dict[str, list[str]] = defaultdict(list)
+    speaker_order: list[str] = []
 
     for seg in transcript.segments:
-        if seg.speaker and seg.speaker != current_speaker:
-            current_speaker = seg.speaker
-            if lines:
-                lines.append("")
-            lines.append(f"[{seg.speaker}]")
+        speaker = seg.speaker or "?"
+        if speaker not in by_speaker:
+            speaker_order.append(speaker)
+        by_speaker[speaker].append(seg.text.strip())
 
-        lines.append(seg.text.strip())
+    blocks: list[str] = []
+    for speaker in speaker_order:
+        lines = [f"[{speaker}]"] + by_speaker[speaker]
+        blocks.append("\n".join(lines))
 
-    return "\n".join(lines).strip() + "\n"
+    return "\n\n".join(blocks).strip() + "\n"
 
 
 def format_raw(transcript: Transcript) -> str:
